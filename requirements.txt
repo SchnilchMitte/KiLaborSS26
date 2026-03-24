@@ -3,3 +3,4 @@ numpy
 ipython
 ipykernel
 torchvision
+matplotlib
