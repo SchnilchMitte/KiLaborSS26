@@ -2,5 +2,6 @@ torch
 numpy
 ipython
 ipykernel
+ipywidgets
 torchvision
 matplotlib
