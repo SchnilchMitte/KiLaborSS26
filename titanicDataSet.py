@@ -13,7 +13,7 @@ class TitanicDataSet(Dataset):
         self.test_size = test_size
         self.seed = seed
 
-        data = self._prepare_data(csv_file, test_size, seed)
+        data = self._prepare_data(csv_file, test_size)
 
         if train:
             self.X = data["X_train"]
@@ -30,7 +30,7 @@ class TitanicDataSet(Dataset):
         print("Data types:", df.dtypes)
 
 
-    def _prepare_data(self, csv_file, test_size, seed):
+    def _prepare_data(self, csv_file, test_size):
         df = pd.read_csv(csv_file)
         print("test")
         self._show_info_about_data(df)
@@ -41,6 +41,8 @@ class TitanicDataSet(Dataset):
         target = "Survived"
 
         df = df[feature_cols + [target]].copy()
+        # Shuffle
+        df.sample(frac=1).reset_index(drop=True)
 
         split_idx = int(len(df) * (1 - test_size))
         train_df = df.iloc[:split_idx].copy()
@@ -179,21 +181,26 @@ if __name__ == "__main__":
 
         # ---- Evaluation ----
         model.eval()
-        correct = 0
-        total = 0
-        test_loss = 0.0
+        all_outputs = []
+        all_targets = []
 
         with torch.no_grad():
             for X, y in test_loader:
                 outputs = model(X)
                 loss = criterion(outputs, y)
-                test_loss += loss.item() * X.size(0)
 
-                preds = (outputs >= 0.5).float()
-                correct += (preds == y).sum().item()
-                total += y.size(0)
+                all_outputs.append(outputs)
+                all_targets.append(y)
 
-        test_loss /= len(test_loader.dataset)
-        accuracy = correct / total
+        y_pred_probs = torch.cat(all_outputs, dim=0)
+        y_true = torch.cat(all_targets, dim=0)
 
-        print(f"Epoch {epoch+1:02d} | Train Loss: {train_loss:.4f} | Test Loss: {test_loss:.4f}) | Test Accuracy: {accuracy:.4f}")
+        accuracy, precision, recall = compute_metrics(y_true, y_pred_probs)
+
+        print(
+            f"Epoch {epoch + 1:02d} | "
+            f"Train Loss: {train_loss:.4f} | "
+            f"Acc: {accuracy:.4f} | "
+            f"Prec: {precision:.4f} | "
+            f"Recall: {recall:.4f}"
+        )
