@@ -4,6 +4,9 @@ import torch
 from torch import nn, Tensor
 from torch.utils.data import Dataset, DataLoader
 
+random_seed = 42
+torch.manual_seed(random_seed)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class TitanicDataSet(Dataset):
 
@@ -42,7 +45,7 @@ class TitanicDataSet(Dataset):
 
         df = df[feature_cols + [target]].copy()
         # Shuffle
-        df.sample(frac=1).reset_index(drop=True)
+        df = df.sample(frac=1, random_state=random_seed).reset_index(drop=True)
 
         split_idx = int(len(df) * (1 - test_size))
         train_df = df.iloc[:split_idx].copy()
@@ -107,24 +110,29 @@ class TitanicNet(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
 
-        self.fc1 = nn.Linear(input_dim, 3)
+        self.dp = nn.Dropout(p=0.5)
+
+        self.fc1 = nn.Linear(input_dim, 32)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(3, 32)
-        self.fc3 = nn.Linear(32, 64)
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 1)
+        self.fc2 = nn.Linear(32, 32)
+        self.fc3 = nn.Linear(32, 32)
+        self.fc6 = nn.Linear(32, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu(x)
+
+        x = self.dp(x)
+
         x = self.fc2(x)
         x = self.relu(x)
+
         x = self.fc3(x)
         x = self.relu(x)
-        x = self.fc4(x)
-        x = self.relu(x)
-        x = self.fc5(x)
+
+
+        x = self.fc6(x)
         x = self.sigmoid(x)
         return x
 
@@ -156,19 +164,22 @@ def compute_metrics(y_true : Tensor, y_pred_probs):
 
     return accuracy, precision, recall
 
-if __name__ == "__main__":
+
+def main():
     titanic_train = TitanicDataSet("data/titanic.csv", train=True)
     titanic_test = TitanicDataSet("data/titanic.csv", train=False)
+
 
     train_loader = DataLoader(titanic_train, batch_size=16, shuffle=True)
     test_loader = DataLoader(titanic_test, batch_size=16, shuffle=False)
 
     input_dim = titanic_train.X.shape[1]
     model = TitanicNet(input_dim)
+    model = model.to(device)
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    num_epochs = 20
+    num_epochs = 100
     train_losses = []
     test_losses = []
 
@@ -180,15 +191,19 @@ if __name__ == "__main__":
 
     train_recalls = []
     test_recalls = []
+
+    model.eval()
     for epoch in range(num_epochs):
         # ---- Training ----
         model.train()
+        model = model.to(device)
         train_loss = 0.0
         train_outputs = []
         train_targets = []
         for X, y in train_loader:
             optimizer.zero_grad()
-
+            y = y.to(device)
+            X = X.to(device)
             outputs = model(X)
             loss = criterion(outputs, y)
 
@@ -208,6 +223,7 @@ if __name__ == "__main__":
         )
 
         # ---- Evaluation ----
+        model = model.to('cpu')
         model.eval()
         test_outputs = []
         test_targets = []
@@ -268,7 +284,8 @@ if __name__ == "__main__":
     plt.legend()
 
     # Metrics
-    plt.subplot(2, 1, 2)
+    ax = plt.subplot(2, 1, 2)
+    ax.set_ylim([.5, 1])
     plt.xlabel("Epoch")
     plt.ylabel("Score")
     plt.plot(epochs, train_accuracies, label="Train_Accuracy")
@@ -280,3 +297,6 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.show()
+
+if __name__ == "__main__":
+    main()
