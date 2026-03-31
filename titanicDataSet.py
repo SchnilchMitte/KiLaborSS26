@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -116,6 +116,34 @@ class TitanicNet(nn.Module):
         x = self.fc2(x)
         x = self.sigmoid(x)
         return x
+
+def compute_metrics(y_true : Tensor, y_pred_probs):
+    y_pred = (y_pred_probs >= 0.5).float()
+
+    tp = ((y_pred == 1) & (y_true == 1)).sum().item()
+    tn = ((y_pred == 0) & (y_true == 0)).sum().item()
+    fp = ((y_pred == 1) & (y_true == 0)).sum().item()
+    fn = ((y_pred == 0) & (y_true == 1)).sum().item()
+
+    # Accuracy = (TP + TN) / alles
+    if tp + tn + fp + fn == 0:
+        accuracy = 0
+    else:
+        accuracy = (tp + tn) / (tp + tn + fp + fn)
+
+    # Precisision = TP / (TP + FP)
+    if tp + fp == 0:
+        precision = 0
+    else:
+        precision = tp / (tp + fp)
+
+    # Recall = TP / (TP + FN)
+    if tp + fn == 0:
+        recall = 0
+    else:
+        recall = tp / (tp + fn)
+
+    return accuracy, precision, recall
 
 if __name__ == "__main__":
     titanic_train = TitanicDataSet("data/titanic.csv", train=True)
