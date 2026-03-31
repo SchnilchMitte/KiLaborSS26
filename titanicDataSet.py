@@ -110,7 +110,7 @@ class TitanicNet(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
 
-        self.dp = nn.Dropout(p=0.5)
+        self.do = nn.Dropout(p=0.5)
 
         self.fc1 = nn.Linear(input_dim, 32)
         self.relu = nn.ReLU()
@@ -120,17 +120,16 @@ class TitanicNet(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
+        x = self.do(x)
+
         x = self.fc1(x)
         x = self.relu(x)
-
-        x = self.dp(x)
 
         x = self.fc2(x)
         x = self.relu(x)
 
         x = self.fc3(x)
         x = self.relu(x)
-
 
         x = self.fc6(x)
         x = self.sigmoid(x)
@@ -177,7 +176,7 @@ def main():
     model = TitanicNet(input_dim)
     model = model.to(device)
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     num_epochs = 100
     train_losses = []
