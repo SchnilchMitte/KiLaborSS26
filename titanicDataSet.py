@@ -171,14 +171,21 @@ if __name__ == "__main__":
     num_epochs = 20
     train_losses = []
     test_losses = []
-    accuracies = []
-    precisions = []
-    recalls = []
+
+    train_accuracies = []
+    test_accuracies = []
+
+    train_precisions = []
+    test_precisions = []
+
+    train_recalls = []
+    test_recalls = []
     for epoch in range(num_epochs):
         # ---- Training ----
         model.train()
         train_loss = 0.0
-
+        train_outputs = []
+        train_targets = []
         for X, y in train_loader:
             optimizer.zero_grad()
 
@@ -187,16 +194,23 @@ if __name__ == "__main__":
 
             loss.backward()
             optimizer.step()
-
+            train_outputs.append(outputs.detach())
+            train_targets.append(y)
             # X.size(0) = Batch size (letzter Batch kann kleiner als 16 sein!)
             train_loss += loss.item() * X.size(0)
 
         train_loss /= len(train_loader.dataset)
+        y_train_pred_probs = torch.cat(train_outputs, dim=0)
+        y_train_true = torch.cat(train_targets, dim=0)
+
+        train_accuracy, train_precision, train_recall = compute_metrics(
+            y_train_true, y_train_pred_probs
+        )
 
         # ---- Evaluation ----
         model.eval()
-        all_outputs = []
-        all_targets = []
+        test_outputs = []
+        test_targets = []
         test_loss = 0.0
         with torch.no_grad():
             for X, y in test_loader:
@@ -205,25 +219,40 @@ if __name__ == "__main__":
 
                 test_loss += loss.item() * X.size(0)
 
-                all_outputs.append(outputs)
-                all_targets.append(y)
+                test_outputs.append(outputs)
+                test_targets.append(y)
 
         test_loss /= len(test_loader.dataset)
-        test_losses.append(test_loss)
-        y_pred_probs = torch.cat(all_outputs, dim=0)
-        y_true = torch.cat(all_targets, dim=0)
 
-        accuracy, precision, recall = compute_metrics(y_true, y_pred_probs)
+        y_pred_probs = torch.cat(test_outputs, dim=0)
+        y_true = torch.cat(test_targets, dim=0)
+
+        y_test_pred_probs = torch.cat(test_outputs, dim=0)
+        y_test_true = torch.cat(test_targets, dim=0)
+
+        test_accuracy, test_precision, test_recall = compute_metrics(
+            y_test_true, y_test_pred_probs
+        )
+
         train_losses.append(train_loss)
-        accuracies.append(accuracy)
-        precisions.append(precision)
-        recalls.append(recall)
+        test_losses.append(test_loss)
+
+        train_accuracies.append(train_accuracy)
+        test_accuracies.append(test_accuracy)
+
+        train_precisions.append(train_precision)
+        test_precisions.append(test_precision)
+
+        train_recalls.append(train_recall)
+        test_recalls.append(test_recall)
         print(
             f"Epoch {epoch + 1:02d} | "
             f"Train Loss: {train_loss:.4f} | "
-            f"Acc: {accuracy:.4f} | "
-            f"Prec: {precision:.4f} | "
-            f"Recall: {recall:.4f}"
+            f"Test Loss: {test_loss:.4f} | "
+            f"Train Acc: {train_accuracy:.4f} | "
+            f"Test Acc: {test_accuracy:.4f} | "
+            f"Test Prec: {test_precision:.4f} | "
+            f"Test Recall: {test_recall:.4f}"
         )
 
     import matplotlib.pyplot as plt
@@ -242,9 +271,12 @@ if __name__ == "__main__":
     plt.subplot(2, 1, 2)
     plt.xlabel("Epoch")
     plt.ylabel("Score")
-    plt.plot(epochs, accuracies, label="Accuracy")
-    plt.plot(epochs, precisions, label="Precision")
-    plt.plot(epochs, recalls, label="Recall")
+    plt.plot(epochs, train_accuracies, label="Train_Accuracy")
+    plt.plot(epochs, test_accuracies, label="Test_Accuracy")
+    plt.plot(epochs, train_recalls, label="Train_Recall")
+    plt.plot(epochs, test_recalls, label="Test_Recall")
+    plt.plot(epochs, train_precisions, label="Train_Precision")
+    plt.plot(epochs, test_precisions, label="Test_Precision")
     plt.legend()
 
     plt.show()
