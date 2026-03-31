@@ -160,7 +160,11 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     num_epochs = 20
-
+    train_losses = []
+    test_losses = []
+    accuracies = []
+    precisions = []
+    recalls = []
     for epoch in range(num_epochs):
         # ---- Training ----
         model.train()
@@ -175,6 +179,7 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
 
+            # X.size(0) = Batch size (letzter Batch kann kleiner als 16 sein!)
             train_loss += loss.item() * X.size(0)
 
         train_loss /= len(train_loader.dataset)
@@ -183,20 +188,27 @@ if __name__ == "__main__":
         model.eval()
         all_outputs = []
         all_targets = []
-
+        test_loss = 0.0
         with torch.no_grad():
             for X, y in test_loader:
                 outputs = model(X)
                 loss = criterion(outputs, y)
 
+                test_loss += loss.item() * X.size(0)
+
                 all_outputs.append(outputs)
                 all_targets.append(y)
 
+        test_loss /= len(test_loader.dataset)
+        test_losses.append(test_loss)
         y_pred_probs = torch.cat(all_outputs, dim=0)
         y_true = torch.cat(all_targets, dim=0)
 
         accuracy, precision, recall = compute_metrics(y_true, y_pred_probs)
-
+        train_losses.append(train_loss)
+        accuracies.append(accuracy)
+        precisions.append(precision)
+        recalls.append(recall)
         print(
             f"Epoch {epoch + 1:02d} | "
             f"Train Loss: {train_loss:.4f} | "
@@ -204,3 +216,26 @@ if __name__ == "__main__":
             f"Prec: {precision:.4f} | "
             f"Recall: {recall:.4f}"
         )
+
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+    epochs = range(1, num_epochs + 1)
+    # Loss
+    plt.subplot(2, 1, 1)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.plot(epochs, train_losses, label="Train Loss")
+    plt.plot(epochs, test_losses, label="Test Loss")
+    plt.legend()
+
+    # Metrics
+    plt.subplot(2, 1, 2)
+    plt.xlabel("Epoch")
+    plt.ylabel("Score")
+    plt.plot(epochs, accuracies, label="Accuracy")
+    plt.plot(epochs, precisions, label="Precision")
+    plt.plot(epochs, recalls, label="Recall")
+    plt.legend()
+
+    plt.show()
