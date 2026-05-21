@@ -1,60 +1,89 @@
-import zipfile
+import sys
 from pathlib import Path
-from io import BytesIO
-import pandas as pd
+import cv2
+import matplotlib.pyplot as plt
+from DOTA import DOTA
+import numpy as np
+from matplotlib.patches import Polygon
+basepath = "DOTA/train"
+
+dota = DOTA(basepath)
 
 
-outer_zip_path = Path("data/train.zip")
-inner_label_zip_path = "train/labelTxt-v1.0/labelTxt.zip"
+img_ids = dota.getImgIds()
+print("Anzahl Bilder:", len(img_ids))
+num_annotations = sum(len(anns) for anns in dota.ImgToAnns.values())
+print("Anzahl Annotationen:", num_annotations)
+print("Erste Bild-ID:", img_ids[0])
 
-rows = []
+for img_id, anns in dota.ImgToAnns.items():
+    print(img_id, len(anns))
 
-with zipfile.ZipFile(outer_zip_path, "r") as outer_z:
-    with outer_z.open(inner_label_zip_path) as inner_zip_file:
-        inner_zip_bytes = BytesIO(inner_zip_file.read())
+img_id = img_ids[0]
+anns = dota.loadAnns(imgId=img_id)
 
-    with zipfile.ZipFile(inner_zip_bytes, "r") as label_z:
-        label_files = [
-            f for f in label_z.namelist()
-            if f.endswith(".txt")
-        ]
+print("Annotationen:")
+for ann in anns[:5]:
+    print(ann)
 
-        print("Anzahl Label-Dateien:", len(label_files))
-        print(label_files[:5])
 
-        for label_file in label_files:
-            image_id = Path(label_file).stem
+def show_image_with_annotations(
+    dota,
+    img_id=None,
+    figsize=(12, 12)
+):
 
-            with label_z.open(label_file) as f:
-                for raw_line in f:
-                    line = raw_line.decode("utf-8").strip()
-                    if not line:
-                        continue
 
-                    parts = line.split()
+    catNms = []
 
-                    if parts[0] in ["imagesource:", "gsd:"]:
-                        continue
+    img_path = Path(dota.imagepath) / f"{img_id}.png"
 
-                    if len(parts) < 10:
-                        continue
+    img = cv2.imread(str(img_path))
 
-                    x1, y1, x2, y2, x3, y3, x4, y4 = map(float, parts[:8])
+    if img is None:
+        raise FileNotFoundError(f"Bild konnte nicht geladen werden: {img_path}")
 
-                    rows.append({
-                        "image_id": image_id,
-                        "category": parts[8],
-                        "difficult": int(parts[9]),
-                        "x1": x1, "y1": y1,
-                        "x2": x2, "y2": y2,
-                        "x3": x3, "y3": y3,
-                        "x4": x4, "y4": y4,
-                        "label_file": label_file,
-                    })
+    # OpenCV = BGR, matplotlib erwartet RGB
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-df = pd.DataFrame(rows)
+    anns = dota.loadAnns(catNms=catNms, imgId=img_id)
 
-print(df.head())
 
-print(df.shape)
-print(df["category"].value_counts())
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.imshow(img)
+    ax.axis("off")
+    ax.set_title(f"{img_id} | {len(anns)} Annotationen")
+
+    for ann in anns:
+        poly = np.array(ann["poly"], dtype=np.float32)
+
+        polygon = Polygon(
+            poly,
+            closed=True,
+            fill=True,
+            edgecolor="red",
+            facecolor="red",
+            alpha=0.25,
+            linewidth=2
+        )
+
+        ax.add_patch(polygon)
+        x0, y0 = poly[0]
+        ax.plot(x0, y0, "bo", markersize=4)
+
+        ax.text(
+                x0,
+                y0,
+                ann["name"],
+                color="yellow",
+                fontsize=8,
+                bbox=dict(facecolor="black", alpha=0.6, edgecolor="none")
+            )
+
+    plt.tight_layout()
+    plt.show()
+
+    return anns
+
+
+show_image_with_annotations(dota, img_id="P0005")
