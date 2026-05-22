@@ -200,7 +200,7 @@ def polygonToRotRectangle(bbox):
     :return: Rotated Rectangle in format [cx, cy, w, h, theta]
     """
     bbox = np.array(bbox,dtype=np.float32)
-    bbox = np.reshape(bbox,newshape=(2,4),order='F')
+    bbox = np.reshape(bbox, shape=(2,4),order='F')
     angle = math.atan2(-(bbox[0,1]-bbox[0,0]),bbox[1,1]-bbox[1,0])
 
     center = [[0],[0]]
@@ -223,7 +223,7 @@ def polygonToRotRectangle(bbox):
     w = xmax - xmin + 1
     h = ymax - ymin + 1
 
-    return [float(center[0]),float(center[1]),w,h,angle]
+    return [float(center[0][0]),float(center[1][0]),w,h,angle]
 
 def cal_line_length(point1, point2):
     return math.sqrt( math.pow(point1[0] - point2[0], 2) + math.pow(point1[1] - point2[1], 2))
