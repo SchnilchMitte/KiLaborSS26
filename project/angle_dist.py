@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from DOTA import DOTA
-import dota_utils as util
+from project.DOTA import dota_utils as util
 from collections import defaultdict
 import numpy as np
 

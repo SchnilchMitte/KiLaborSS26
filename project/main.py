@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from DOTA import DOTA
 import numpy as np
 from matplotlib.patches import Polygon
+
+from DOTA.segmentation.segmentation import grabcut_from_obb
+from DOTA.segmentation.visualize_segmentation import visualize_obb_vs_segmentation
+from project.DOTA.segmentation.export_mask import save_mask_txt_for_image, export_all_grabcut_masks_as_txt
+
 basepath = "DOTA/train"
 
 dota = DOTA(basepath)
@@ -86,4 +91,66 @@ def show_image_with_annotations(
     return anns
 
 
-show_image_with_annotations(dota, img_id="P0005")
+
+#21 baseball
+img_id = "P0002"
+# alternativ:
+# img_id = img_ids[0]
+show_image_with_annotations(dota, img_id=img_id)
+# Bild laden
+img_path = Path(dota.imagepath) / f"{img_id}.png"
+img_bgr = cv2.imread(str(img_path))
+
+if img_bgr is None:
+    raise FileNotFoundError(f"Bild konnte nicht geladen werden: {img_path}")
+
+# OpenCV lädt BGR -> matplotlib braucht RGB
+img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+# Annotationen laden
+anns = dota.loadAnns(imgId=img_id)
+
+# GrabCut-Segmentierungen erzeugen
+masks = []
+
+for ann in anns:
+    mask = grabcut_from_obb(
+        img_rgb=img_rgb,
+        poly=ann["poly"],
+        margin=0.25,
+        iters=5,
+        restrict_to_obb=True
+    )
+
+    masks.append({
+        "category": ann["name"],
+        "difficult": ann.get("difficult", 0),
+        "mask": mask
+    })
+
+print("Anzahl Annotationen:", len(anns))
+print("Anzahl erzeugte Masken:", len(masks))
+
+# Visualisieren
+visualize_obb_vs_segmentation(
+    img_rgb=img_rgb,
+    anns=anns,
+    masks=masks,
+    alpha=0.45,
+    figsize=(14, 14),
+    show_obb=False,
+    show_outline=False
+)
+
+#export_all_grabcut_masks_as_txt(
+#    dota=dota,
+#    out_dir="DOTA/train/labelMaskTxt",
+#    margin=0.25,
+#    iters=5,
+#    restrict_to_obb=True,
+#    epsilon_ratio=0.002,
+#    min_area=10
+#)
+#-----------------------------
+#SAM
+

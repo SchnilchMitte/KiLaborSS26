@@ -12,3 +12,4 @@ evaluate~=0.4.6
 datasets~=4.8.5
 transformers~=5.8.1
 opencv-python
+git+https://github.com/facebookresearch/segment-anything.git
