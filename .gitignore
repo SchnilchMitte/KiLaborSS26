@@ -219,4 +219,6 @@ __marimo__/
 /files
 /.idea
 /data
-/project/DOTA/
+/project/DOTA/test
+/project/DOTA/train
+/project/DOTA/val
