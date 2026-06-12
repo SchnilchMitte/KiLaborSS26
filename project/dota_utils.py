@@ -46,11 +46,12 @@ def parse_dota_poly(filename):
     #print('filename:', filename)
     f = []
     if (sys.version_info >= (3, 5)):
-        fd = open(filename, 'r')
+        fd = open(filename, 'r', encoding='utf-8', errors='replace')
         f = fd
     elif (sys.version_info >= 2.7):
-        fd = codecs.open(filename, 'r')
+        fd = codecs.open(filename, 'r', encoding="utf-8")
         f = fd
+
     # count = 0
     while True:
         line = f.readline()
