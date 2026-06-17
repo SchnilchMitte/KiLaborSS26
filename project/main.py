@@ -154,3 +154,13 @@ visualize_obb_vs_segmentation(
 #-----------------------------
 #SAM
 
+from ultralytics import YOLO
+
+model = YOLO("yolo11s-seg.pt")
+model.train(
+    data="isaid.yaml",
+    imgsz=1024,
+    epochs=100,
+    batch=8,
+    task="segment"
+)
