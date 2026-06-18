@@ -12,3 +12,5 @@ if __name__ == '__main__':
                           batch=3,
                           pretrained=False,
                           seed=42,)
+
+
