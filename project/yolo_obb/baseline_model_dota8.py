@@ -1,6 +1,7 @@
 from multiprocessing import freeze_support
 from ultralytics import YOLO
 
+
 if __name__ == '__main__':
     print("Starting Base Model DOTA8")
     freeze_support()
