@@ -97,7 +97,7 @@ class DOTA:
         ax.add_collection(p)
         p = PatchCollection(circles, facecolors='red')
         ax.add_collection(p)
-    def loadImgs(self, imgids=[]):
+    def loadImgs(self, imgids=[], ext='png'):
         """
         :param imgids: integer ids specifying img
         :return: loaded img objects
@@ -107,7 +107,7 @@ class DOTA:
         print('imgids:', imgids)
         imgs = []
         for imgid in imgids:
-            filename = os.path.join(self.imagepath, imgid + '.png')
+            filename = os.path.join(self.imagepath, imgid + '.' + ext)
             print('filename:', filename)
             img = cv2.imread(filename)
             imgs.append(img)
