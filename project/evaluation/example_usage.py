@@ -16,10 +16,10 @@ from compare_yolo_runs import (
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 BASELINE = BaselineRun.BASELINE
-EXPERIMENT_DIR = PROJECT_ROOT / "runs" / "obb" / "train"
+EXPERIMENT_DIR = PROJECT_ROOT / "runs" / "obb" / "train_baseline_dota128"
 
 BASELINE_NAME = "baseline"
-EXPERIMENT_NAME = "augmented"
+EXPERIMENT_NAME = "dota128"
 
 
 def example_show_everything():
