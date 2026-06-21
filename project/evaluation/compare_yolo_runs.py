@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 class BaselineRun(Enum):
     BASELINE = PROJECT_ROOT / "runs" / "obb" / "train_baseline"
     BASELINE_DOTA8 = PROJECT_ROOT / "runs" / "obb" / "train_baseline_dota8"
-
+    BASELINE_DOTA128 = PROJECT_ROOT / "runs" / "obb" / "train_baseline_dota128"
 
 RunPath = Union[str, Path, BaselineRun]
 
