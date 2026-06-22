@@ -122,32 +122,7 @@ def slice_image(
 
     return results
 
-from DOTA import DOTA
-import cv2
-
 def str_label_to_tuple(label: list[str]) -> DOTALabel:
     x1, y1, x2, y2, x3, y3, x4, y4, class_label, diff = label
     return int(x1), int(y1), int(x2), int(y2), int(x3), int(y3), int(x4), int(y4), class_label, int(diff)
 
-if __name__ == "__main__":
-    # Load DOTA images
-    img_path = "DOTAv1/images/train/P0000.jpg"
-    label_path = "DOTAv1/labels/train_original/P0000.txt"
-
-    with open(label_path, "r") as f:
-        labels = f.readlines()[2:]
-        labels = [l.split() for l in labels]
-        labels = [str_label_to_tuple(l) for l in labels]
-
-        # Cast all values except second last as float, second last is str
-
-
-    # Open img with cv2
-    img = cv2.imread(img_path)
-    slices = slice_image(img, slice_size=(1024, 1024), labels=labels, anchor="top-left")
-    print(slices[0])
-
-    cv2.imshow("img", slices[0][0])
-    cv2.waitKey(0)
-
-    # plot imshow
