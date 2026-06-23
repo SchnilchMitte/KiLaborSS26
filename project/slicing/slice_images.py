@@ -126,3 +126,13 @@ def str_label_to_tuple(label: list[str]) -> DOTALabel:
     x1, y1, x2, y2, x3, y3, x4, y4, class_label, diff = label
     return int(x1), int(y1), int(x2), int(y2), int(x3), int(y3), int(x4), int(y4), class_label, int(diff)
 
+def yolo_str_label_to_tuple(label: list[str], dsize: tuple[int, int], class_map: dict[int, str]) -> DOTALabel:
+    cls_id, x1, y1, x2, y2, x3, y3, x4, y4 = label
+    cls_label = class_map.get(int(cls_id))
+    if cls_label is None:
+        raise ValueError(f"Class ID {cls_id} not found in class map")
+    return (int(float(x1) * dsize[0]), int(float(y1) * dsize[1]),
+            int(float(x2) * dsize[0]), int(float(y2) * dsize[1]),
+            int(float(x3) * dsize[0]), int(float(y3) * dsize[1]),
+            int(float(x4) * dsize[0]), int(float(y4) * dsize[1]),
+            cls_label, 0)

@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ----------------------------
 
-IMG_ROOT = "../DOTAv1_sliced/images"
-LBL_ROOT = "../DOTAv1_sliced/labels"
+# Adjust this depending on current working directory
+IMG_ROOT = "project/dota8_sliced/images"
+LBL_ROOT = "project/dota8_sliced/labels"
 
 SPLIT = "train"
 N_SAMPLES = 10
@@ -88,6 +89,8 @@ def draw_labels(img, labels):
 
 
 def show_grid(images, titles, cols=3):
+    if len(images) == 0 or len(titles) == 0:
+        raise ValueError("No images")
     rows = (len(images) + cols - 1) // cols
     plt.figure(figsize=(15, 5 * rows))
 
@@ -110,10 +113,13 @@ def show_grid(images, titles, cols=3):
 def visualize_random():
     img_dir = os.path.join(IMG_ROOT, SPLIT)
     lbl_dir = os.path.join(LBL_ROOT, SPLIT)
-
+    print(img_dir)
     images = [f for f in os.listdir(img_dir) if f.endswith(".jpg")]
 
-    samples = random.sample(images, min(N_SAMPLES, len(images)))
+    sample_count = min(N_SAMPLES, len(images))
+    assert sample_count > 0
+    samples = random.sample(images, sample_count)
+    assert len(samples) > 0
 
     vis_imgs = []
     titles = []

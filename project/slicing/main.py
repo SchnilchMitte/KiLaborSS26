@@ -1,7 +1,7 @@
 import os
 import cv2
 from tqdm import tqdm
-from slice_images import slice_image, str_label_to_tuple
+from slice_images import slice_image, str_label_to_tuple, yolo_str_label_to_tuple
 
 IMG_ROOT = "DOTAv1/images"
 LBL_ROOT = "DOTAv1/labels"
@@ -29,6 +29,11 @@ DEFAULT_CLASS_MAP = {
     "swimming-pool": 14
 }
 
+def reverse_dict(d: dict[str, int]) -> dict:
+    rev = dict()
+    for k, i in d.items():
+        rev[i] = k
+    return rev
 
 # ----------------------------
 # LABEL LOADING
@@ -43,7 +48,6 @@ def load_labels(label_path):
 
     labels = [l.split() for l in lines]
     return labels
-
 
 # ----------------------------
 # CONVERSION TO YOLO OBB
@@ -88,6 +92,8 @@ def process_split(split, class_map,
                   src_img_dir=IMG_ROOT,
                   src_lbl_dir=LBL_ROOT,
                   out_dir=OUT_ROOT):
+    reversed_class_map = reverse_dict(class_map)
+    
     img_dir = os.path.join(src_img_dir, split)
     lbl_dir = os.path.join(src_lbl_dir, f"{split}_original")
 
@@ -99,6 +105,9 @@ def process_split(split, class_map,
     os.makedirs(out_lbl_dota, exist_ok=True)
     os.makedirs(out_lbl_yolo, exist_ok=True)
 
+    if not os.path.exists(img_dir):
+        print(f"Image directory {img_dir} does not exist. Skipping '{split}'.")
+        return
     images = [f for f in os.listdir(img_dir) if f.endswith(".jpg")]
 
     for img_file in tqdm(images, desc=f"Processing {split}"):
@@ -109,10 +118,24 @@ def process_split(split, class_map,
 
         img = cv2.imread(img_path)
         if img is None:
-            continue
+            raise ValueError(f"Failed to read image {img_path}")
 
-        labels = load_labels(label_path)
-        labels = [str_label_to_tuple(l) for l in labels]
+        try:
+            labels = load_labels(label_path)
+            if len(labels) == 0:
+                raise ValueError('Missing labels.')
+            labels = [str_label_to_tuple(l) for l in labels]
+        except Exception as e:
+            # print(f"Error processing labels for {img_file}: {e}")
+            # print("Test fallback")
+            label_path = label_path.replace("_original", "")
+            labels = load_labels(label_path)
+            w, h, _ = img.shape
+            
+            labels = [yolo_str_label_to_tuple(l, (w, h), reversed_class_map) for l in labels]
+            if len(labels) == 0:
+                pass
+                # print("[WARNING] No labels")
 
         slices = slice_image(
             img,
@@ -144,9 +167,13 @@ def process_split(split, class_map,
 
 
 if __name__ == "__main__":
+    fwd = os.path.dirname(os.path.abspath(__file__)) # filedir
+    basedir = os.path.abspath(os.path.join(fwd, "..", "dota8")) # 'filedir/../dota8'
+    
+    print(basedir)
     for split in SPLITS:
         process_split(split,
-                      DEFAULT_CLASS_MAP,
-                      src_img_dir="../DOTAv1/images",
-                      src_lbl_dir="../DOTAv1/labels",
-                      out_dir="../DOTAv1_sliced")
+                    DEFAULT_CLASS_MAP,
+                    src_img_dir=f"{basedir}/images",
+                    src_lbl_dir=f"{basedir}/labels",
+                    out_dir=f"{basedir}_sliced")
