@@ -10,11 +10,8 @@ import matplotlib.pyplot as plt
 # ----------------------------
 
 # Adjust this depending on current working directory
-IMG_ROOT = "project/dota8_sliced/images"
-LBL_ROOT = "project/dota8_sliced/labels"
 
 SPLIT = "train"
-N_SAMPLES = 10
 
 
 # Optional: match your DOTA classes
@@ -110,13 +107,14 @@ def show_grid(images, titles, cols=3):
 # MAIN VISUALIZATION
 # ----------------------------
 
-def visualize_random():
-    img_dir = os.path.join(IMG_ROOT, SPLIT)
-    lbl_dir = os.path.join(LBL_ROOT, SPLIT)
+def visualize_random(img_root, lbl_root, n_samples=10):
+    
+    img_dir = os.path.join(img_root, SPLIT)
+    lbl_dir = os.path.join(lbl_root, SPLIT)
     print(img_dir)
     images = [f for f in os.listdir(img_dir) if f.endswith(".jpg")]
 
-    sample_count = min(N_SAMPLES, len(images))
+    sample_count = min(n_samples, len(images))
     assert sample_count > 0
     samples = random.sample(images, sample_count)
     assert len(samples) > 0
@@ -143,4 +141,8 @@ def visualize_random():
 
 
 if __name__ == "__main__":
-    visualize_random()
+    visualize_random(
+        "project/dota128_sliced/images",
+        "project/dota128_sliced/labels",
+        12
+    )

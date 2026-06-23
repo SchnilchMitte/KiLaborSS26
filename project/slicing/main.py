@@ -3,10 +3,6 @@ import cv2
 from tqdm import tqdm
 from slice_images import slice_image, str_label_to_tuple, yolo_str_label_to_tuple
 
-IMG_ROOT = "DOTAv1/images"
-LBL_ROOT = "DOTAv1/labels"
-OUT_ROOT = "DOTAv1_sliced"
-
 SPLITS = ["train", "val", "test"]
 
 # Spelling for labels is from DOTA file.
@@ -89,9 +85,9 @@ def save_txt(path, rows):
 # ----------------------------
 
 def process_split(split, class_map,
-                  src_img_dir=IMG_ROOT,
-                  src_lbl_dir=LBL_ROOT,
-                  out_dir=OUT_ROOT):
+                  src_img_dir,
+                  src_lbl_dir,
+                  out_dir):
     reversed_class_map = reverse_dict(class_map)
     
     img_dir = os.path.join(src_img_dir, split)
