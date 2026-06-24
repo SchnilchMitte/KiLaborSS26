@@ -15,11 +15,12 @@ from compare_yolo_runs import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-BASELINE = BaselineRun.BASELINE
-EXPERIMENT_DIR = PROJECT_ROOT / "runs" / "obb" / "train_baseline_dota128"
+#BASELINE = BaselineRun.BASELINE_DOTA128
+BASELINE = PROJECT_ROOT / "runs" / "obb" / "train_baseline"
+EXPERIMENT_DIR = PROJECT_ROOT / "runs" / "obb" / "train-4"
 
-BASELINE_NAME = "baseline"
-EXPERIMENT_NAME = "dota128"
+BASELINE_NAME = "image 1024"
+EXPERIMENT_NAME = "image1280"
 
 
 def example_show_everything():
